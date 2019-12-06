@@ -16,7 +16,7 @@ jobs:
   include:
   - stage: build docker image
     script:
-    - echo $HEROKU_API_KEY | docker login -u _ registry.heroku.com --password-stdin
+    - docker login -u _ registry.heroku.com --password $HEROKU_API_KEY
     - export CONTAINER_NAME=registry.heroku.com/my-cool-beer-api/web:$(git rev-parse
       --short HEAD^2)
     - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then export CACHE_CONTAINER=$CONTAINER_NAME;
@@ -29,7 +29,7 @@ jobs:
     - docker push registry.heroku.com/my-cool-beer-api/web:build
   - stage: deploy
     script:
-    - echo $HEROKU_API_KEY | docker login -u _ registry.heroku.com --password-stdin
+    - docker login -u _ registry.heroku.com --password-stdin $HEROKU_API_KEY
     - export CONTAINER_NAME=registry.heroku.com/my-cool-beer-api/web:$(git rev-parse
       --short HEAD^2)
     - docker pull $CONTAINER_NAME
