@@ -11,12 +11,13 @@ stages:
 - name: test deployment
   if: type != pull_request
 env:
-  secure: "KSrppxNmTjvONsE/3Q/DR56FuzHOJOjJcpTwH8R8+JAu3HSeuHE5LXigNiHXuB7edpWyxWJQcvN5fg3ABUGoVPZBcqIqp9vFlw1ZCq9vJue3t7WwhDxytLvxHYhIidR+H6CJ8AkzqoMs1+9QtFn3r3k4Pn9ZvtR+eADo92gEFmiAnFjyJ9q0eP7AsP7o4JP749LlaBk7dXQRBLyV/cEHEY65nnDZmZLd48U0QHB/EDPKrO/ym1mNExJJrWPAz0ERLAlQLv8BFnuQgaMVzCqddEPUePKUC2LH1+fT1surUWsHujNJ8T3Sjsgep1CCgK2PyzOjk/Xwj6hU3THB6FSOqJbiYspyIXbJBCc+3x8HBVPVPsuNWWIvmcgOkuZcYXGlxIGIJoJlazhH7kV6x8T2L8qEiZzckdy64LV+vUa4USAkpdS7+5DXeAn+Mn9rpAZ/AysGGdcFWxWp8OvORI9h8OcXauOcDoP1uJ1ovz57hqUV2UfG71LsjeTNQ9fh8qhgbAQr+BhfB4+v91QG1TIeZLr+kkLJa8JQFlWzS7Q3gguFaDOA3rKDvK/ewCUBiong7nNkHjIMvxAEbWWqU8PPy+ZCHlOWDYKH05F/K3dOWKp9LhubnUmIfMZL08zJKS3FzJLxphYiVUxT1UlZELqQkl8H2y7kxsUln2di0wrRaGc="
+  secure: "DvupUz6Im17OB9ybaTwHbI4oGTzv2Wdm3YORgKnF9maavF8wvJoqvkQ+fFp4B6xzqg057SidWb5yDlQ216x1h1NWUrxPu7EOMPWKa2qkcX8VpeNNspuTDzTz0wxu7GTlL43cwUdo5Zl2LWJ+gTulz/rZI9TpFuXQ1URHLwjtrikLsgt+XPSXHu5mjEVNe3o8+BD9r9zPPi/pAt2sv3/W+ZyqI6xkyd4qAjyY7uwFTRinxG9sM+QasFRwJpymiv0xQAggKyh09gtfML1hA3E7fge2ubOoejxPf/b87y9gEJxmeVOC+J2mJRPOwAILcn5UwivzjLqd5jHhL3GI5VSzx4vtLHmKCvBRbRK4ZNT5YLF344kXWT+oyJcQwu9nToD/w3k5UuyDklktgXoWvU6/6rsRw1kJ//J55z6+KwMvI1DFd1zfwNtrtFC0SKUxseCnH6pvg7KWQXnloFspmGfAmXyY1qgy8eMQcPidbrWq0sIfsrmL8DT76eAiadgPX27kZOppQ9TyEmx83wR/TrJBWoiSivCB+VFKf5IqACnN8H7YRGSUhFvdDoXV/FQl9JoZqzSRQXQYVKzLkRZuXoOxKCuGXqBV3iPFpaHOblGsSEZe23vN3kGmrsONagWQswiIgys56MWBPRkrd6/gMZ4uo4LFIJnDDwwGYsA3d3LYIyw="
 jobs:
   include:
   - stage: build docker image
     script:
-    - docker login -u _ registry.heroku.com --password $HEROKU_API_KEY
+    # Using echo prevents us from preventing our API key into any build logs.
+    - echo $HEROKU_API_KEY | docker login -u _ registry.heroku.com --password-stdin
     - export CONTAINER_NAME=registry.heroku.com/my-cool-beer-api/web:$(git rev-parse
       --short HEAD^2)
     - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then export CACHE_CONTAINER=$CONTAINER_NAME;
@@ -29,7 +30,7 @@ jobs:
     - docker push registry.heroku.com/my-cool-beer-api/web:build
   - stage: deploy
     script:
-    - docker login -u _ registry.heroku.com --password-stdin $HEROKU_API_KEY
+    - echo $HEROKU_API_KEY | docker login -u _ registry.heroku.com --password-stdin
     - export CONTAINER_NAME=registry.heroku.com/my-cool-beer-api/web:$(git rev-parse
       --short HEAD^2)
     - docker pull $CONTAINER_NAME
