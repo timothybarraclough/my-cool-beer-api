@@ -34,7 +34,7 @@ library
         persistent-postgresql -any,
         persistent-template -any,
         safe -any,
-        servant >=0.7 && <0.8,
+        servant -any,
         servant-server -any,
         transformers -any,
         wai -any,
