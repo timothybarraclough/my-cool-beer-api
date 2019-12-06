@@ -1,0 +1,42 @@
+language: minimal
+services:
+- docker
+branches:
+  only:
+  - master
+stages:
+- build docker image
+- name: deploy
+  if: type != pull_request
+- name: test deployment
+  if: type != pull_request
+env:
+  secure: "DvupUz6Im17OB9ybaTwHbI4oGTzv2Wdm3YORgKnF9maavF8wvJoqvkQ+fFp4B6xzqg057SidWb5yDlQ216x1h1NWUrxPu7EOMPWKa2qkcX8VpeNNspuTDzTz0wxu7GTlL43cwUdo5Zl2LWJ+gTulz/rZI9TpFuXQ1URHLwjtrikLsgt+XPSXHu5mjEVNe3o8+BD9r9zPPi/pAt2sv3/W+ZyqI6xkyd4qAjyY7uwFTRinxG9sM+QasFRwJpymiv0xQAggKyh09gtfML1hA3E7fge2ubOoejxPf/b87y9gEJxmeVOC+J2mJRPOwAILcn5UwivzjLqd5jHhL3GI5VSzx4vtLHmKCvBRbRK4ZNT5YLF344kXWT+oyJcQwu9nToD/w3k5UuyDklktgXoWvU6/6rsRw1kJ//J55z6+KwMvI1DFd1zfwNtrtFC0SKUxseCnH6pvg7KWQXnloFspmGfAmXyY1qgy8eMQcPidbrWq0sIfsrmL8DT76eAiadgPX27kZOppQ9TyEmx83wR/TrJBWoiSivCB+VFKf5IqACnN8H7YRGSUhFvdDoXV/FQl9JoZqzSRQXQYVKzLkRZuXoOxKCuGXqBV3iPFpaHOblGsSEZe23vN3kGmrsONagWQswiIgys56MWBPRkrd6/gMZ4uo4LFIJnDDwwGYsA3d3LYIyw="
+jobs:
+  include:
+  - stage: build docker image
+    script:
+    # Using echo prevents us from preventing our API key into any build logs.
+    - echo $HEROKU_API_KEY | docker login -u _ registry.heroku.com --password-stdin
+    - export CONTAINER_NAME=registry.heroku.com/my-cool-beer-api/web:$(git rev-parse
+      --short HEAD^2)
+    - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then export CACHE_CONTAINER=$CONTAINER_NAME;
+      else export CACHE_CONTAINER="registry.heroku.com/my-cool-beer-api/web:build";
+      fi
+    - docker pull $CACHE_CONTAINER || true
+    - docker build --cache-from $CACHE_CONTAINER -t $CONTAINER_NAME .
+    - docker push $CONTAINER_NAME
+    - docker tag $CONTAINER_NAME registry.heroku.com/my-cool-beer-api/web:build
+    - docker push registry.heroku.com/my-cool-beer-api/web:build
+  - stage: deploy
+    script:
+    - echo $HEROKU_API_KEY | docker login -u _ registry.heroku.com --password-stdin
+    - export CONTAINER_NAME=registry.heroku.com/my-cool-beer-api/web:$(git rev-parse
+      --short HEAD^2)
+    - docker pull $CONTAINER_NAME
+    - docker tag $CONTAINER_NAME registry.heroku.com/my-cool-beer-api/web:latest
+    - docker push registry.heroku.com/my-cool-beer-api/web:latest
+    - wget -qO- https://cli-assets.heroku.com/install.sh | sh
+    - heroku container:release web -a my-cool-beer-api
+  - stage: test deployment
+    script: curl https://my-cool-beer-api.herokuapp.com/brewers
